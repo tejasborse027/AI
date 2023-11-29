@@ -1,0 +1,274 @@
+Pract 1:
+%Program1
+%red(rose).
+%likes(bill ,cindy).
+%owns(gold,john).
+
+%Program 2:
+c_to_f(C, F) :-
+    F is C * 9 / 5 + 32.
+
+% Check if the temperature is freezing
+freezing(F) :-
+    F =< 32.
+
+
+Pract 2: 8 queen prob
+
+% Pract2:render solutions nicely.
+:- use_rendering(chess).
+
+%%    queens(+N, -Queens) is nondet.
+%
+%	@param	Queens is a list of column numbers for placing the queens.
+%	@author Richard A. O'Keefe (The Craft of Prolog)
+
+queens(N, Queens) :-
+    length(Queens, N),
+	board(Queens, Board, 0, N, _, _),
+	queens(Board, 0, Queens).
+
+board([], [], N, N, _, _).
+board([_|Queens], [Col-Vars|Board], Col0, N, [_|VR], VC) :-
+	Col is Col0+1,
+	functor(Vars, f, N),
+	constraints(N, Vars, VR, VC),
+	board(Queens, Board, Col, N, VR, [_|VC]).
+
+constraints(0, _, _, _) :- !.
+constraints(N, Row, [R|Rs], [C|Cs]) :-
+	arg(N, Row, R-C),
+	M is N-1,
+	constraints(M, Row, Rs, Cs).
+
+queens([], _, []).
+queens([C|Cs], Row0, [Col|Solution]) :-
+	Row is Row0+1,
+	select(Col-Vars, [C|Cs], Board),
+	arg(Row, Vars, Row-Row),
+	queens(Board, Row, Solution).
+
+
+/** <examples>
+
+?- queens(8, Queens).
+
+*/
+
+
+Pract3: DFS
+% 3:Updated graph representation with adjacency information
+edge(a, b).
+edge(a, c).
+edge(b, d).
+edge(b, e).
+edge(c, f).
+
+% Depth-first search predicate
+dfs(Node, Visited) :-
+    dfs(Node, [], Visited).
+
+dfs(Node, Path, Visited) :-
+    \+ member(Node, Path),
+    write(Node), nl,
+    append(Path, [Node], NewPath),
+    findall(Adjacent, edge(Node, Adjacent), AdjacentNodes),
+    member(NextNode, AdjacentNodes),
+    dfs(NextNode, NewPath, Visited).
+
+dfs(_, Visited, Visited).
+
+
+% Example usage:
+% To find all nodes reachable from node 'a'
+% Call: dfs(a, Visited).
+
+
+
+Pract4: BFS
+
+% 4:Graph representation with heuristic values
+edge(a, b, 2).
+edge(a, c, 3).
+edge(b, d, 1).
+edge(b, e, 4).
+edge(c, f, 2).
+
+% Heuristic values for each node
+heuristic(a, 5).
+heuristic(b, 3).
+heuristic(c, 2).
+heuristic(d, 1).
+heuristic(e, 4).
+heuristic(f, 0).
+
+% Best-First Search predicate
+best_first_search(Start, Goal) :-
+    best_first_search([(0, Start)], Goal, []).
+
+best_first_search([], _, _) :- write('Goal not reached.').
+best_first_search([(Cost, Node) | _], Goal, _) :-
+    Node = Goal,
+    write('Goal reached!'), nl,
+    write('Total cost: '), write(Cost).
+best_first_search([(Cost, Node) | Rest], Goal, Visited) :-
+    findall((NewCost, Adjacent), (edge(Node, Adjacent, EdgeCost), \+ member(Adjacent, Visited), heuristic(Adjacent, H), NewCost is Cost + EdgeCost + H), Children),
+    append(Rest, Children, NewQueue),
+    sort(NewQueue, SortedQueue),
+    best_first_search(SortedQueue, Goal, [Node | Visited]).
+
+% Example usage:
+% To find the path from node 'a' to node 'f'
+% Call: best_first_search(a, f).
+
+
+Pract5:
+
+YOU Do
+
+Pract 6: robot movement
+% Initial state of the robot and obstacles
+at(robot, position(0, 0)).
+at(obstacle1, position(1, 0)).
+at(obstacle2, position(2, 1)).
+choose_action(Action).
+ in_robot(Obj).
+% Goal state for the robot to reach
+goal_state(at(robot, position(2, 2))).
+
+% Define the connected locations and possible directions
+connected(position(X, Y), position(X, Y1)) :- Y1 is Y + 1.
+connected(position(X, Y), position(X, Y1)) :- Y1 is Y - 1.
+connected(position(X, Y), position(X1, Y)) :- X1 is X + 1.
+connected(position(X, Y), position(X1, Y)) :- X1 is X - 1.
+
+% Means-End Analysis to achieve the goal
+solve :-
+    goal_state(at(robot, Goal)),
+    write('Goal reached!'), nl,
+    write('Robot is at: '), write(Goal), nl.
+
+solve :-
+    \+ goal_state(at(robot, _)),
+    choose_action(Action),
+    execute_action(Action),
+    solve.
+
+% Choosing an action based on the current state
+choose_action(move_forward) :-
+    at(robot, Current),
+    connected(Current, Next),
+    \+ at(obstacle(_, _), Next).
+
+choose_action(turn_left).
+
+choose_action(turn_right).
+
+choose_action(pick) :-
+    at(robot, Position),
+    at(obstacle(Obj), Position).
+
+choose_action(drop) :-
+    at(robot, Position),
+    in_robot(Obj).
+
+% Executing the chosen action
+execute_action(move_forward) :-
+    at(robot, Current),
+    connected(Current, Next),
+    \+ at(obstacle(_, _), Next),
+    write('Robot moves forward to '), write(Next), nl,
+    retract(at(robot, _)),
+    assert(at(robot, Next)).
+
+execute_action(turn_left) :-
+    write('Robot turns left'), nl.
+
+execute_action(turn_right) :-
+    write('Robot turns right'), nl.
+
+execute_action(pick) :-
+    at(robot, Position),
+    at(obstacle(Obj), Position),
+    write('Robot picks up '), write(Obj), nl,
+    retract(at(obstacle(Obj), Position)),
+    assert(in_robot(Obj)).
+
+execute_action(drop) :-
+    at(robot, Position),
+    in_robot(Obj),
+    write('Robot drops '), write(Obj), write(' at '), write(Position), nl,
+    retract(in_robot(Obj)),
+    assert(at(obstacle(Obj), Position)).
+
+% Example usage:
+% Call: solve.
+
+Pract 7: travelling salesman
+
+% 7:Cities and distances between them
+distance(city1, city2, 10).
+distance(city2, city3, 25).
+distance(city2, city3, 20).
+
+% Predicate to find a tour
+tsp(Tour, TotalDistance) :-
+    permutation([city1, city2, city3], Tour),
+    valid_tour(Tour, TotalDistance),
+    write('Optimal Tour: '), write(Tour), nl,
+    write('Total Distance: '), write(TotalDistance), nl.
+
+% Predicate to check if a tour is valid and calculate total distance
+valid_tour([_], 0).
+valid_tour([City1, City2 | Rest], TotalDistance) :-
+    distance(City1, City2, Dist),
+    valid_tour([City2 | Rest], RemainingDistance),
+    TotalDistance is Dist + RemainingDistance.
+
+% Example usage
+% Call: tsp(Tour, TotalDistance).
+
+
+
+Pract 8: 
+% Pract8 : Medical imaging data representation
+% For simplicity, using a list of features representing imaging data
+% Each feature is a pixel value or a feature extracted from the image
+
+% Example features for illustration
+features([feature('Intensity', 0.8), feature('Texture', 0.4), feature('Shape', 0.2), feature('Edge', 0.9)]).
+
+% Predicates to define diseases based on imaging features
+diagnosis(features) :-
+    features(Features),
+    evaluate_features(Features, Disease),
+    write('Diagnosis: '), write(Disease), nl.
+
+% Rule to evaluate imaging features and make a diagnosis
+evaluate_features(Features, Disease) :-
+    has_intensity_variation(Features),
+    has_texture_irregularity(Features),
+    has_abnormal_shape(Features),
+    has_edge_irregularity(Features),
+    Disease = 'Healthy'.
+
+% Rules to check for specific features related to diseases
+has_intensity_variation(Features) :-
+    member(feature('Intensity', Intensity), Features),
+    Intensity > 0.7. % Example threshold, can be adjusted.
+
+has_texture_irregularity(Features) :-
+    member(feature('Texture', Texture), Features),
+    Texture < 0.5. % Example threshold, can be adjusted.
+
+has_abnormal_shape(Features) :-
+    member(feature('Shape', Shape), Features),
+    Shape < 0.3. % Example threshold, can be adjusted.
+
+has_edge_irregularity(Features) :-
+    member(feature('Edge', Edge), Features),
+    Edge > 0.8. % Example threshold, can be adjusted.
+
+% Example usage:
+% Call: diagnosis(features).
+
