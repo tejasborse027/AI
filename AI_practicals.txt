@@ -8,6 +8,11 @@ Pract 1:
 c_to_f(C, F) :-
     F is C * 9 / 5 + 32.
 
+%Quries:
+c_to_f(100, X)
+freezing(15).
+freezing(45).
+
 % Check if the temperature is freezing
 freezing(F) :-
     F =< 32.
@@ -271,4 +276,3 @@ has_edge_irregularity(Features) :-
 
 % Example usage:
 % Call: diagnosis(features).
-
